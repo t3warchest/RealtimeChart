@@ -1,0 +1,36 @@
+.app {
+  background: linear-gradient(
+    to top,
+    #3498db,
+    #5dade2,
+    #85c1e9,
+    #aed6f1,
+    #d6eaf8
+  );
+  height: 100vh;
+  width: 100vw;
+}
+
+.header {
+  text-align: center;
+  font-size: 70px;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.graph-display-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.graph-display {
+  margin-top: 50px;
+  height: 600px;
+  width: 1000px;
+  border-style: solid;
+  border-color: black;
+  display: flex;
+
+  /* justify-content: center; */
+}

@@ -1,38 +1,39 @@
-import csv
-import random
+import pandas as pd
+import pika
+import json
+import time
 from datetime import datetime, timedelta
 
+
+def read_csv(file_path):
+    df = pd.read_csv(file_path)
+    return list(df.iloc[:, 0].to_dict().values()) , list(df.iloc[:, 1].to_dict().values())
+
+def send_to_mq(queue_name, message):
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue=queue_name, durable=False)
+    channel.basic_publish(exchange='', routing_key=queue_name, body=message)
+    connection.close()
+
 def main():
-    interval_minutes = 30
+    csv_file_path = 'TS5_chopped.csv'
+    queue_name = 'levels_data'  
+    elapsed_times, data_values = read_csv(csv_file_path)
+    times = elapsed_times[:100]
+    values = data_values[:100]
 
-    interval = timedelta(minutes=interval_minutes)
-    print(interval)
-    
-    filename = "steps_record.csv"
+    for elapsed_time, value in zip(times, values):
 
-    fields = ['time', 'steps']
+        message = json.dumps({
+            'time': elapsed_time,
+            'levels': value
+        })
 
-    with open(filename, 'a', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fields)
-        writer.writeheader()  # Write header only if the file is empty
+        send_to_mq(queue_name, message)
+        print(f"Sent: {message}")
 
-        current_time = datetime.now()
-        
-        no_of_rows = 0
-        while no_of_rows <= 1000:
-            time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-            steps = random.randint(0, 100)
-            row = {'time': time, 'steps': steps}
-
-            writer.writerow(row)  # Write row directly without opening file again
-
-            current_time += interval
-            no_of_rows += 1
-            print(current_time)
-
-
-    
-
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     main()

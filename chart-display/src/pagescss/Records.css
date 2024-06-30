@@ -1,0 +1,23 @@
+.tabs_container {
+  display: flex;
+  list-style-type: none;
+  padding: 5px;
+  margin: 10px;
+  gap: 1rem;
+}
+
+.tab_button {
+  padding: 10px 20px;
+  border-style: solid;
+  cursor: pointer;
+
+  background: none;
+  transition: background-color 0.3s;
+}
+.tab_button.active {
+  background-color: #a1aea4;
+}
+
+.tab_button:hover {
+  background-color: #f0f0f0;
+}

@@ -20,8 +20,8 @@ def main():
     csv_file_path = 'TS5_chopped.csv'
     queue_name = 'levels_data'  
     elapsed_times, data_values = read_csv(csv_file_path)
-    times = elapsed_times[:100]
-    values = data_values[:100]
+    times = elapsed_times[:50]
+    values = data_values[:50]
 
     for elapsed_time, value in zip(times, values):
 
@@ -33,7 +33,9 @@ def main():
         send_to_mq(queue_name, message)
         print(f"Sent: {message}")
 
-        time.sleep(0.2)
+        time.sleep(0.25)
+        
+    send_to_mq(queue_name,"end")
 
 if __name__ == "__main__":
     main()

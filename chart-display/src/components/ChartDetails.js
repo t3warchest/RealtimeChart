@@ -14,12 +14,12 @@ const ChartDetail = (props) => {
 
   const mountedStyle = { animationName: "inAnimation" };
   const unmountedStyle = { animationName: "outAnimation" };
-
   useEffect(() => {
     if (stream === "end") {
       setIsMounted(true);
       setShowDiv(true);
     } else if (stream.length > 1) {
+      console.log("hi");
       const dataPoint = stream[stream.length - 1];
 
       setPeakValue((prev) =>
@@ -65,33 +65,73 @@ const ChartDetail = (props) => {
         </div>
       )}
       <div className="chart-details-container">
-        <div id="chart-details">
-          <table>
-            <tr>
-              <th>Parameter</th>
-              <th>Value</th>
-            </tr>
-            <tr>
-              <td>Peak value</td>
-              <td>{peakValue}</td>
-            </tr>
-            <tr>
-              <td>Min value</td>
-              <td>{minValue}</td>
-            </tr>
-            <tr>
-              <td>Time in blue zone</td>
-              <td>{blueZonePercentage}%</td>
-            </tr>
-            <tr>
-              <td>Time in red zone</td>
-              <td>{redZonePercentage}%</td>
-            </tr>
-            <tr>
-              <td>Time in green zone</td>
-              <td>{greenZonePercentage}%</td>
-            </tr>
-          </table>
+        <div className="current-chart-values">
+          <div className="chart-values-header">TSI values</div>
+          <div className="chart-values-values">
+            <div className="chart-values-section current">
+              <div className="section-values-header">
+                <p> Current:</p>
+              </div>
+              <div className="current-values-values">
+                <p>
+                  {stream !== "end" && stream.length > 1
+                    ? stream[stream.length - 1].levels
+                    : 0}
+                </p>
+              </div>
+            </div>
+            <div className="chart-values-section predicted">
+              <div className="section-values-header">
+                <p>Predicted :</p>
+              </div>
+              <div className="current-values-values">
+                <p>
+                  {stream !== "end" && stream.length > 1
+                    ? stream[stream.length - 1].levels
+                    : 0}
+                </p>
+              </div>
+            </div>
+
+            {/* {stream !== "end" ? stream[stream.length - 1] : 0} */}
+          </div>
+        </div>
+        <div className="current-chart-values">
+          <div className="chart-values-header">Time</div>
+          <div className="chart-values-values time">
+            <div className="chart-values-section time total-time">
+              <div className="section-values-header">
+                <p> Total:</p>
+              </div>
+              <div className="current-values-values">
+                <p>{totalPoints}</p>
+              </div>
+            </div>
+            <div className="chart-values-section time green-zone">
+              <div className="section-values-header">
+                <p>Green Zone :</p>
+              </div>
+              <div className="current-values-values">
+                <p>{greenZonePercentage}</p>
+              </div>
+            </div>
+            <div className="chart-values-section time red-zone">
+              <div className="section-values-header">
+                <p>Red Zone :</p>
+              </div>
+              <div className="current-values-values">
+                <p>{redZonePercentage}</p>
+              </div>
+            </div>
+            <div className="chart-values-section time blue-zone">
+              <div className="section-values-header">
+                <p>Blue Zone :</p>
+              </div>
+              <div className="current-values-values">
+                <p>{blueZonePercentage}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

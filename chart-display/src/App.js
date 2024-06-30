@@ -1,77 +1,28 @@
-import React, { useEffect, useState } from "react";
 import "./App.css";
-import ChartViewer from "./components/ChartViewer";
-import ChartDetail from "./components/ChartDetails";
+import Navbar from "./components/Navbar";
+import SideBar from "./components/SideBar";
+import Records from "./pages/Records";
+import Contact from "./pages/Contact";
+import Account from "./pages/Account";
+import Home from "./pages/Home";
 
-const socket = new WebSocket("ws://localhost:8080");
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
-  const [dataStream, setDataStream] = useState([{ time: 0, levels: 0 }]);
-
-  useEffect(() => {
-    socket.addEventListener("open", (event) => {
-      socket.send("Connection established");
-    });
-
-    const messageHandler = (event) => {
-      if (event.data === "end") {
-        setDataStream("end");
-        return;
-      }
-      const data = JSON.parse(event.data);
-      if (!data) {
-        console.error(data.error);
-      } else {
-        const newDataPoint = {
-          time: parseInt(data.time, 10), //new Date(data.time),
-          levels: parseInt(data.levels, 10),
-        };
-        setDataStream((prevDataStream) => {
-          const updatedDataStream = [...prevDataStream, newDataPoint];
-          return updatedDataStream;
-        });
-      }
-    };
-
-    socket.addEventListener("message", messageHandler);
-
-    return () => {
-      socket.removeEventListener("message", messageHandler);
-    };
-  }, []);
-
   return (
-    <div className="app">
-      <div className="header">
-        <div className="title-text">
-          Mihos<span>.</span>
-        </div>
-        <div id="separator"></div>
-        <div id="sub-title">Analytics &gt;</div>
-        <div id="page-title">Oxygen Chart</div>
-      </div>
-      <div className="graph-display-container">
-        <div className="graph-display">
-          {/* <div className="block top"></div>
-          <div className="block mid"></div>
-          <div className="block bottom"></div> */}
-          <div className="chart">
-            <ChartViewer data={dataStream} />
-          </div>
-          <div className="chart-info">
-            <ChartDetail data={dataStream} />
-            <div className="action-displayer"></div>
-          </div>
-        </div>
-        <div className="column right">
-          <div className="inside-column-right">
-            <div className="right-column-content">
-              <header className="right-column-header">Bibliography</header>
-            </div>
-          </div>
+    <Router>
+      <div className="app">
+        <div className="page-conatiner">
+          <SideBar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/records" element={<Records />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
         </div>
       </div>
-    </div>
+    </Router>
   );
 }
 

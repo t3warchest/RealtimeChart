@@ -4,7 +4,7 @@ import ApexCharts from "apexcharts";
 
 function ChartViewer(props) {
   const [currentlyAt, setCurrentlyAt] = useState(null);
-  console.log(props);
+  // console.log(props);
 
   const generateColors = (data) => {
     if (data !== "end") {
@@ -27,7 +27,7 @@ function ChartViewer(props) {
   const [series, setSeries] = useState([
     {
       name: "Level",
-      data: [{ x: 0, y: 0 }], //[],
+      data: [], //[],
     },
   ]);
 
@@ -61,6 +61,25 @@ function ChartViewer(props) {
         enabled: true,
       },
     },
+    annotations: {
+      yaxis: [
+        {
+          y: 30,
+          y2: 70,
+          fillColor: "#006A4E",
+        },
+        {
+          y: 0,
+          y2: 30,
+          fillColor: "#fd5c63",
+        },
+        {
+          y: 70,
+          y2: 100,
+          fillColor: "#4B9CD3",
+        },
+      ],
+    },
     legend: {
       show: false,
     },
@@ -93,14 +112,22 @@ function ChartViewer(props) {
       },
     },
     xaxis: {
-      range: 100,
-      type: "numeric", //"datetime",
-      // labels: {
-      //   formatter: function (val) {
-      //     const date = new Date(val);
-      //     return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()}`;
-      //   },
-      // },
+      type: "datetime", //"datetime",
+      labels: {
+        formatter: function (val) {
+          const date = new Date(val);
+          let hours = date.getHours();
+          const minutes = date.getMinutes();
+          const seconds = date.getSeconds();
+          const milliseconds = date.getMilliseconds();
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12;
+          hours = hours ? hours : 12; // the hour '0' should be '12'
+          const strMinutes = minutes < 10 ? "0" + minutes : minutes;
+          const strSeconds = seconds < 10 ? "0" + seconds : seconds;
+          return `${hours}:${strMinutes}:${strSeconds}.${milliseconds}`;
+        },
+      },
     },
     yaxis: {
       min: 0,
@@ -149,7 +176,7 @@ function ChartViewer(props) {
   };
 
   return (
-    <div style={{ border: "2px solid black" }}>
+    <div className="chartviewer-container-component">
       <div>
         <Chart
           options={options}

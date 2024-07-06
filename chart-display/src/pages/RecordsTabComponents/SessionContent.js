@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import ApexCharts from "apexcharts";
+import SessionDetails from "./SessionDetails";
 
 const SessionContent = ({ sessions, activeTab }) => {
   const [sessionData, setSessionData] = useState([]);
@@ -11,6 +12,7 @@ const SessionContent = ({ sessions, activeTab }) => {
     },
   ]);
   const [callFinish, setCallFinish] = useState(false);
+  const [noData, setNoData] = useState(false);
 
   const options = {
     chart: {
@@ -94,69 +96,84 @@ const SessionContent = ({ sessions, activeTab }) => {
   }
 
   useEffect(() => {
+    setNoData(false);
     console.log(activeTab);
     if (activeTab === 4) {
       console.log(activeTab);
       fetch(`http://localhost:8000/sessiondata?session=all`)
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
-          for (const key in data) {
-            if (data.hasOwnProperty(key)) {
-              data[key] = data[key].map((point) => ({
-                time: Number(point.time),
-                levels: Number(point.levels),
-              }));
+          if (Object.keys(data).length === 0) {
+            setNoData(true);
+          } else {
+            console.log(data);
+            for (const key in data) {
+              if (data.hasOwnProperty(key)) {
+                data[key] = data[key].map((point) => ({
+                  time: Number(point.time),
+                  levels: Number(point.levels),
+                }));
+              }
             }
-          }
-          const { maxtime, maxlength } = findXaxis(data);
-          const levelsArray = createLevelsArray(data);
-          console.log(maxtime);
-          console.log(levelsArray);
+            const { maxtime, maxlength } = findXaxis(data);
+            const levelsArray = createLevelsArray(data);
+            console.log(maxtime);
+            console.log(levelsArray);
 
-          const newSeries = [
-            {
-              name: "Session 1",
-              data: levelsArray["1"],
-            },
-            {
-              name: "Session 2",
-              data: levelsArray["2"],
-            },
-            {
-              name: "Session 3",
-              data: levelsArray["3"],
-            },
-          ];
-          ApexCharts.exec("realtime", "updateOptions", {
-            xaxis: {},
-            labels: maxtime,
-          });
-          // console.log(newSeries);
-          setSeries(newSeries);
+            const newSeries = [
+              {
+                name: "Session 1",
+                data: levelsArray["1"],
+              },
+              {
+                name: "Session 2",
+                data: levelsArray["2"],
+              },
+              {
+                name: "Session 3",
+                data: levelsArray["3"],
+              },
+            ];
+            ApexCharts.exec("realtime", "updateOptions", {
+              xaxis: {},
+              labels: maxtime,
+            });
+            // console.log(newSeries);
+            setSeries(newSeries);
+          }
           setCallFinish(true);
         })
         .catch((err) => {
           console.log(err);
         });
     } else {
+      setNoData(false);
       fetch(`http://localhost:8000/sessiondata?session=${activeTab}`)
-        .then((response) => response.json())
+        .then((response) => {
+          console.log(response);
+          return response.json();
+        })
         .then((data) => {
-          const convertedData = data.map((point) => ({
-            time: Number(point.time),
-            levels: Number(point.levels),
-          }));
-          setSeries([
-            {
-              name: "Session Data",
-              data: convertedData.map((point) => ({
-                x: point.time,
-                y: point.levels,
-              })),
-            },
-          ]);
-          setSessionData(convertedData);
+          console.log(data);
+          if (data.length === 0) {
+            setNoData(true);
+            console.log(noData);
+          } else {
+            const convertedData = data.map((point) => ({
+              time: Number(point.timestamp),
+              levels: Number(point.value),
+            }));
+            setSeries([
+              {
+                name: "Session Data",
+                data: convertedData.map((point) => ({
+                  x: point.time,
+                  y: point.levels,
+                })),
+              },
+            ]);
+            setSessionData(convertedData);
+          }
           setCallFinish(true);
         })
         .catch((err) => {
@@ -168,20 +185,26 @@ const SessionContent = ({ sessions, activeTab }) => {
   return (
     <div className="session-content-container">
       <div className="session-content">
-        <p>Session {activeTab} content</p>
         {callFinish ? (
-          <div>
-            <Chart
-              options={options}
-              series={series}
-              type="line"
-              width="100%"
-              height="400"
-            />
-          </div>
+          noData ? (
+            <div className="no-data-placeholder">
+              <p>No session data available</p>
+            </div>
+          ) : (
+            <div className="session-detail-chart-container">
+              <Chart
+                options={options}
+                series={series}
+                type="line"
+                width="100%"
+                height="400"
+              />
+            </div>
+          )
         ) : (
           <p>loading...</p>
         )}
+        <SessionDetails />
       </div>
     </div>
   );

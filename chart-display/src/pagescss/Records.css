@@ -1,3 +1,10 @@
+.session-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+}
 .tabs_container {
   display: flex;
   list-style-type: none;
@@ -20,4 +27,41 @@
 
 .tab_button:hover {
   background-color: #f0f0f0;
+}
+
+.session-content-container {
+  width: 70%;
+}
+.session-content {
+  width: 80%;
+  height: 420px;
+  background-color: #faf6ef;
+  display: grid;
+  grid-template-columns: repeat(4, 29%);
+  grid-template-rows: auto 150px;
+  column-gap: 10px;
+  row-gap: 10px;
+}
+.session-detail-chart-container {
+  grid-column: 1/5;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fffef9;
+}
+
+.no-data-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 415px;
+  /*width: 100%; */
+  grid-column: 1/5;
+  background-color: #f0f0f0; /* Optional: add a background color */
+  border: 1px solid #ccc; /* Optional: add a border */
+  box-sizing: border-box;
+}
+
+.no-data-placeholder p {
+  font-size: 18px;
+  color: #666;
 }

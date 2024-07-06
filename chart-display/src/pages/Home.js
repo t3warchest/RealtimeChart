@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "../pagescss/Home.css";
 import ChartViewer from "../components/ChartViewer";
 import ChartDetail from "../components/ChartDetails";
@@ -7,18 +7,16 @@ import { saveAs } from "file-saver";
 const socket = new WebSocket("ws://localhost:8080");
 
 const Home = () => {
-  const [dataStream, setDataStream] = useState([
-    { time: new Date().getTime(), levels: 0 },
-  ]); //{ time: 0, levels: 0 }
+  const [dataStream, setDataStream] = useState([]);
+  const messageHandlerRef = useRef(null);
 
   useEffect(() => {
     socket.addEventListener("open", (event) => {
       // socket.send("Connection established");
     });
 
-    const messageHandler = (event) => {
+    messageHandlerRef.current = (event) => {
       if (event.data === "end") {
-        // downloadCSV(dataStream);
         setDataStream("end");
         return;
       }
@@ -30,30 +28,16 @@ const Home = () => {
           time: data.time, //parseInt(data.time, 10),
           levels: parseFloat(data.levels),
         };
-        setDataStream((prevDataStream) => {
-          const updatedDataStream = [...prevDataStream, newDataPoint];
-          return updatedDataStream;
-        });
+        setDataStream((prevDataStream) => [...prevDataStream, newDataPoint]);
       }
     };
 
-    socket.addEventListener("message", messageHandler);
+    socket.addEventListener("message", messageHandlerRef.current);
 
     return () => {
-      socket.removeEventListener("message", messageHandler);
+      socket.removeEventListener("message", messageHandlerRef.current);
     };
   }, []);
-
-  const downloadCSV = (data) => {
-    const headers = ["time", "levels"];
-    const csvData = [
-      headers.join(","),
-      ...data.map((row) => `${row.time},${row.levels}`),
-    ].join("\n");
-
-    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, "dataStream.csv");
-  };
 
   const handleStartButton = () => {
     socket.send("start channel");
@@ -76,10 +60,10 @@ const Home = () => {
       <div className="graph-display">
         <div className="chart">
           <ChartViewer data={dataStream} />
-        </div>
-        <div className="chart-info">
           <ChartDetail data={dataStream} />
         </div>
+        {/* <div className="chart-info"> */}
+        {/* </div> */}
       </div>
     </div>
   );

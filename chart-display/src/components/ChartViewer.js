@@ -111,6 +111,9 @@ function ChartViewer(props) {
         colorStops: generateColors(props.data),
       },
     },
+    noData: {
+      text: "Loading...",
+    },
     xaxis: {
       type: "datetime", //"datetime",
       labels: {
@@ -137,7 +140,7 @@ function ChartViewer(props) {
   };
 
   useEffect(() => {
-    if (props.data !== "end") {
+    if (props.data.length !== 0 && props.data !== "end") {
       setSeries([
         {
           name: "Levels",
@@ -153,7 +156,7 @@ function ChartViewer(props) {
       } else {
         setCurrentlyAt("red");
       }
-    } else {
+    } else if (props.data === "end") {
       console.log("inside else");
       ApexCharts.exec("realtime", "updateOptions", {
         xaxis: {
@@ -186,7 +189,7 @@ function ChartViewer(props) {
           height="400"
         />
       </div>
-      <div className="legend-container">
+      {/* <div className="legend-container">
         <div className="legend">
           <div
             className="legend-color"
@@ -208,7 +211,7 @@ function ChartViewer(props) {
           ></div>
           Level &lt; 30
         </div>
-      </div>
+      </div> */}
       {/* <div id="currently-at">
         Currently in: <br />
         <div style={{ display: "block" }}>

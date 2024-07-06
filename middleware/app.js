@@ -1,16 +1,27 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const amqp = require("amqplib");
-
+const redis = require("redis");
 const fs = require("fs");
 const csv = require("csv-parser");
 const path = require("path");
 const ws = require("ws");
-const e = require("express");
+const { INTEGER } = require("sequelize");
 
 const wss = new ws.WebSocketServer({ port: 8080 });
-
 const app = express();
+const client = redis.createClient({
+  password: "YiDuWXnAVoXV3YoXD7OiWkCbTVrAOZst",
+  socket: {
+    host: "redis-11660.c212.ap-south-1-1.ec2.redns.redis-cloud.com",
+    port: 11660,
+  },
+});
+
+client
+  .connect()
+  .then(() => console.log("Connected to Redis!"))
+  .catch((err) => console.error("Failed to connect to Redis:", err));
 
 app.use(bodyParser.json());
 
@@ -25,29 +36,51 @@ app.use((req, res, next) => {
 });
 
 let sockets = [];
-let clientStates = new Map();
+// let clientStates = new Map();
 
 wss.on("connection", async (socket) => {
   console.log("new connection");
   sockets.push(socket);
+  await client.set("start-stop-notifier", "stop");
+  const notifierState = await client.get("start-stop-notifier");
+  console.log("current notifier state :", notifierState);
 
   const { channel, qname } = await establishRmqChannel();
 
-  clientStates.set(socket, { started: false });
+  // clientStates.set(socket, { started: false });
 
-  socket.on("message", (message) => {
-    console.log(message);
+  socket.on("message", async (message) => {
     const data = message.toString();
     console.log(data);
     if (data === "start channel") {
-      clientStates.get(socket).started = true;
+      // clientStates.get(socket).started = true;
+      try {
+        await client.set("start-stop-notifier", "start");
+      } catch (err) {
+        console.log("err in setting key", err);
+      } finally {
+        console.log("notifier key set to start");
+      }
     } else if (data === "end channel") {
-      clientStates.get(socket).started = false;
+      // clientStates.get(socket).started = false;
+      try {
+        await client.set("start-stop-notifier", "stop");
+      } catch (err) {
+        console.log("err in setting key", err);
+      } finally {
+        console.log("notifier key set to stop");
+      }
+      sockets.forEach((socket) => {
+        if (socket.readyState === ws.OPEN) {
+          socket.send("end");
+        }
+      });
     }
   });
 
   socket.on("close", () => {
     console.log("client disconnected");
+    // client.quit();
     sockets.filter((s) => {
       return s !== socket;
     });
@@ -78,6 +111,13 @@ async function sendThroughSocket(channel, qname) {
 
       if (data === "end") {
         console.log("end");
+        try {
+          await client.set("start-stop-notifier", "stop");
+        } catch (err) {
+          console.log("err in setting key", err);
+        } finally {
+          console.log("notifier key set to stop");
+        }
         sockets.forEach((socket) => {
           if (socket.readyState === ws.OPEN) {
             socket.send("end");
@@ -85,20 +125,16 @@ async function sendThroughSocket(channel, qname) {
         });
       } else {
         const value = JSON.parse(data);
-        const new_time = new Date(current_time.getTime() + value.time * 1000);
-        value.time = new_time.getTime();
+        // const new_time = new Date(current_time.getTime() + value.time * 1000);
+        // value.time = new_time.getTime();
 
         // console.log(time);
 
         try {
           sockets.forEach((socket) => {
-            if (clientStates.get(socket).started) {
-              if (socket.readyState === ws.OPEN) {
-                console.log("message sent");
-                socket.send(JSON.stringify(value));
-              }
-            } else {
-              console.log("data evaporated", value);
+            if (socket.readyState === ws.OPEN) {
+              console.log(value);
+              socket.send(JSON.stringify(value));
             }
           });
         } catch (err) {
@@ -124,70 +160,25 @@ app.post("/", async (req, res, next) => {
 });
 
 app.get("/sessiondata", async (req, res, next) => {
-  const session = req.query.session;
-  if (session === "all") {
-    const sessions = [1, 2, 3]; // Assuming session numbers are 1, 2, and 3
-    let allData = {};
-    for (const sessionId of sessions) {
-      const csvFilePath = path.join(__dirname, `./data/data_${sessionId}.csv`);
-      let data = [];
-      await new Promise((resolve, reject) => {
-        fs.createReadStream(csvFilePath)
-          .pipe(
-            csv({
-              delimiter: ",",
-              columns: true,
-              ltrim: true,
-            })
-          )
-          .on("data", function (row) {
-            const modified = {
-              time: row.Time,
-              levels: row.TSI,
-            };
-            data.push(modified);
-          })
-          .on("error", function (error) {
-            console.log(error.message);
-            reject(error);
-          })
-          .on("end", function () {
-            allData[sessionId] = data;
-            resolve();
-          });
-      });
-    }
-    console.log("all data sent");
-    res.status(201).json(allData);
+  console.log("inside server");
+  const reqstdSession = req.query.session;
+  const patientId = "p001"; //req.query.patientId
+  const sessionSetsKey = `patients:${patientId}:sessions`;
+  console.log(sessionSetsKey);
+  const sessionsList = await client.zRange(sessionSetsKey, 0, -1);
+  console.log(sessionsList);
+
+  if (reqstdSession === "all") {
+    res.send({});
   } else {
-    const csvFilePath = path.join(__dirname, `./data/data_${session}.csv`);
-    let data = [];
-    fs.createReadStream(csvFilePath)
-      .pipe(
-        csv({
-          delimiter: ",",
-          columns: "true",
-          ltrim: "true",
-        })
-      )
-      .on("data", function (row) {
-        const modified = {
-          time: row.Time,
-          levels: row.TSI,
-        };
-        data.push(modified);
-      })
-      .on("error", function (error) {
-        console.log(error.message);
-      })
-      .on("end", function () {
-        // Here log the result array
-        // console.log("parsed csv data:");
-        // console.log(data);
-        // const responsedata = data.slice(0, 100);
-        console.log(`session ${session} data sent`);
-        res.status(201).json(data);
-      });
+    const sessionNumber = parseInt(reqstdSession, 10);
+    console.log(sessionNumber);
+    const reqstdSessionId = sessionsList[sessionsList.length - sessionNumber];
+    console.log(reqstdSessionId);
+    const sessionKey = `patients:${patientId}:${reqstdSessionId}`;
+    const sessionData = await client.ts.range(sessionKey, "-", "+");
+    console.log(sessionData);
+    res.send(sessionData);
   }
 });
 

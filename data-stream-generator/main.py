@@ -28,7 +28,7 @@ def send_to_mq(queue_name, message):
     connection.close()
 
 def start_publishing():
-    csv_file_path = 'data_1.csv'
+    csv_file_path = 'data_2.csv'
     queue_name = 'levels_data'
     elapsed_times, data_values = read_csv(csv_file_path)
     times = elapsed_times#[:50]
@@ -68,7 +68,7 @@ def start_publishing():
         
         print(f"Sent: {message}")
 
-        time.sleep(0.25)
+        time.sleep(0.1)
         
     send_to_mq(queue_name, "end")
     

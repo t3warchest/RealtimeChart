@@ -1,23 +1,21 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import "../pagescss/Home.css";
 import ChartViewer from "../components/ChartViewer";
 import ChartDetail from "../components/ChartDetails";
-import { saveAs } from "file-saver";
 
 const socket = new WebSocket("ws://localhost:8080");
 
 const Home = () => {
-  const [dataStream, setDataStream] = useState([]);
-  const messageHandlerRef = useRef(null);
+  const [latestDataPoint, setLatestDataPoint] = useState(null);
 
   useEffect(() => {
-    socket.addEventListener("open", (event) => {
+    const handleOpen = (event) => {
       // socket.send("Connection established");
-    });
+    };
 
-    messageHandlerRef.current = (event) => {
+    const handleMessage = (event) => {
       if (event.data === "end") {
-        setDataStream("end");
+        setLatestDataPoint("end");
         return;
       }
       const data = JSON.parse(event.data);
@@ -25,17 +23,19 @@ const Home = () => {
         console.error(data.error);
       } else {
         const newDataPoint = {
-          time: data.time, //parseInt(data.time, 10),
+          time: data.time,
           levels: parseFloat(data.levels),
         };
-        setDataStream((prevDataStream) => [...prevDataStream, newDataPoint]);
+        setLatestDataPoint(newDataPoint);
       }
     };
 
-    socket.addEventListener("message", messageHandlerRef.current);
+    socket.addEventListener("open", handleOpen);
+    socket.addEventListener("message", handleMessage);
 
     return () => {
-      socket.removeEventListener("message", messageHandlerRef.current);
+      socket.removeEventListener("open", handleOpen);
+      socket.removeEventListener("message", handleMessage);
     };
   }, []);
 
@@ -59,13 +59,12 @@ const Home = () => {
       </div>
       <div className="graph-display">
         <div className="chart">
-          <ChartViewer data={dataStream} />
-          <ChartDetail data={dataStream} />
+          <ChartViewer latestDataPoint={latestDataPoint} />
+          <ChartDetail latestDataPoint={latestDataPoint} />
         </div>
-        {/* <div className="chart-info"> */}
-        {/* </div> */}
       </div>
     </div>
   );
 };
+
 export default Home;

@@ -3,16 +3,16 @@ import Chart from "react-apexcharts";
 import ApexCharts from "apexcharts";
 import SessionDetails from "./SessionDetails";
 
-const SessionContent = ({ sessions, activeTab }) => {
-  const [sessionData, setSessionData] = useState([]);
-  const [series, setSeries] = useState([
+const SessionContent = ({ activeTab }) => {
+  const [dataForAnalytics, setDataForAnalytics] = useState([]);
+  const [callFinish, setCallFinish] = useState(false);
+  const [noData, setNoData] = useState(false);
+  const series = [
     {
       name: "Session Data",
       data: [{ x: 0, y: 0 }],
     },
-  ]);
-  const [callFinish, setCallFinish] = useState(false);
-  const [noData, setNoData] = useState(false);
+  ];
 
   const options = {
     chart: {
@@ -58,88 +58,68 @@ const SessionContent = ({ sessions, activeTab }) => {
     },
     xaxis: {
       type: "numeric",
+      tickAmount: 7,
+      labels: {
+        formatter: function (val) {
+          const date = new Date(val);
+          let hours = date.getHours();
+          const minutes = date.getMinutes();
+          const seconds = date.getSeconds();
+          const milliseconds = date.getMilliseconds();
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12;
+          hours = hours ? hours : 12;
+          const strMinutes = minutes < 10 ? "0" + minutes : minutes;
+          const strSeconds = seconds < 10 ? "0" + seconds : seconds;
+          const strMilliseconds =
+            milliseconds < 100
+              ? milliseconds < 10
+                ? "00" + milliseconds
+                : "0" + milliseconds
+              : milliseconds;
+          return `${hours}:${strMinutes}:${strSeconds}.${strMilliseconds}`;
+        },
+      },
     },
-    // toolbar: {
-    //   show: true,
-    // },
   };
-
-  function findXaxis(dataobj) {
-    let maxtime = [];
-    let maxlength = 0;
-
-    for (const key in dataobj) {
-      if (dataobj.hasOwnProperty(key)) {
-        const currentLength = dataobj[key].length;
-        if (currentLength > maxlength) {
-          maxlength = currentLength;
-          maxtime = dataobj[key].map((item) => item.time);
-        }
-      }
-    }
-    return { maxtime, maxlength };
-  }
-
-  function createLevelsArray(data) {
-    const { maxtime, maxlength } = findXaxis(data);
-    const levelsArray = {};
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        const levels = data[key].map((item) => item.levels);
-        while (levels.length !== maxlength) {
-          levels.push(null);
-        }
-        levelsArray[key] = levels;
-      }
-    }
-    return levelsArray;
-  }
 
   useEffect(() => {
     setNoData(false);
     console.log(activeTab);
     if (activeTab === 4) {
-      console.log(activeTab);
       fetch(`http://localhost:8000/sessiondata?session=all`)
-        .then((response) => response.json())
+        .then((response) => {
+          console.log(response);
+          return response.json();
+        })
         .then((data) => {
           if (Object.keys(data).length === 0) {
+            console.log(data);
             setNoData(true);
           } else {
-            console.log(data);
-            for (const key in data) {
-              if (data.hasOwnProperty(key)) {
-                data[key] = data[key].map((point) => ({
-                  time: Number(point.time),
-                  levels: Number(point.levels),
-                }));
-              }
-            }
-            const { maxtime, maxlength } = findXaxis(data);
-            const levelsArray = createLevelsArray(data);
-            console.log(maxtime);
-            console.log(levelsArray);
+            console.log("thisi si data in sessiondata all", data);
+            const xaxisPoints = data.xaxisPoints;
+            const levelsArray = data.levelsArray;
 
             const newSeries = [
               {
                 name: "Session 1",
-                data: levelsArray["1"],
+                data: levelsArray["0"],
               },
               {
                 name: "Session 2",
-                data: levelsArray["2"],
+                data: levelsArray["1"],
               },
               {
                 name: "Session 3",
-                data: levelsArray["3"],
+                data: levelsArray["2"],
               },
             ];
+            console.log("after new series set");
             ApexCharts.exec("realtime", "updateOptions", {
-              xaxis: {},
-              labels: maxtime,
+              xaxis: { categories: xaxisPoints },
             });
-            // console.log(newSeries);
-            setSeries(newSeries);
+            ApexCharts.exec("realtime", "updateSeries", newSeries);
           }
           setCallFinish(true);
         })
@@ -159,20 +139,15 @@ const SessionContent = ({ sessions, activeTab }) => {
             setNoData(true);
             console.log(noData);
           } else {
-            const convertedData = data.map((point) => ({
-              time: Number(point.timestamp),
-              levels: Number(point.value),
-            }));
-            setSeries([
+            ApexCharts.exec("realtime", "updateSeries", [
               {
-                name: "Session Data",
-                data: convertedData.map((point) => ({
-                  x: point.time,
-                  y: point.levels,
+                data: data.map((point) => ({
+                  x: point.timestamp,
+                  y: point.value,
                 })),
               },
             ]);
-            setSessionData(convertedData);
+            setDataForAnalytics(data);
           }
           setCallFinish(true);
         })
@@ -202,9 +177,11 @@ const SessionContent = ({ sessions, activeTab }) => {
             </div>
           )
         ) : (
-          <p>loading...</p>
+          <div className="no-data-placeholder">
+            <p>loading...</p>
+          </div>
         )}
-        <SessionDetails />
+        <SessionDetails dataForAnalytics={dataForAnalytics} />
       </div>
     </div>
   );

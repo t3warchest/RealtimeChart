@@ -76,74 +76,36 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  text-align: left;
+}
+.current-chart-values.progress {
+  grid-row: span 1;
 }
 
 .chart-values-header {
-  font-size: 1.5em;
+  font-size: 0.8em;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
   margin-bottom: 0.7rem;
 }
 
 .chart-values-values {
+  font-size: 30px;
   display: flex;
-  justify-content: space-between;
   width: 100%;
   gap: 10px;
 }
 
-.chart-values-section {
-  background-color: rgba(255, 255, 255, 0.8);
-  /* padding: 10px; */
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 50%;
-}
-.chart-values-section.radial-chart {
+.chart-values-values.radial-chart {
   width: 100%;
   height: 100%;
 }
-
-.section-values-header {
-  font-size: 1em;
-
-  text-align: center;
+.current-chart-values.green-zone .chart-values-values {
+  color: rgb(71, 181, 144);
 }
-
-.chart-values-section p {
-  margin: 0;
-  font-size: 1em;
+.current-chart-values.blue-zone .chart-values-values {
+  color: rgb(94, 94, 226);
 }
-.chart-values-section.time p {
-  margin: 0;
-  font-size: 1em;
-}
-
-.current-values-values {
-  font-weight: normal;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-}
-.chart-values-values.time {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-}
-
-.chart-values-section.time {
-  width: 100%;
-  height: 100%;
-}
-
-.chart-values-section.red-zone .current-values-values {
-  color: rgb(225, 86, 86);
-}
-.chart-values-section.blue-zone .current-values-values {
-  color: rgb(93, 109, 227);
-}
-.chart-values-section.green-zone .current-values-values {
-  color: rgb(92, 171, 124);
+.current-chart-values.red-zone .chart-values-values {
+  color: rgb(224, 128, 128);
 }

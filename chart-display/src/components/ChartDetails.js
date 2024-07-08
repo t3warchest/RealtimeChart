@@ -3,9 +3,8 @@ import ProgressChart from "./ProgressChart";
 import "./ChartDetail.css";
 
 const ChartDetail = (props) => {
-  const stream = props.data;
-  const [peakValue, setPeakValue] = useState(0);
-  const [minValue, setMinValue] = useState(100);
+  const latestDataPoint = props.latestDataPoint;
+  const [currentZone, setCurrentZone] = useState("Green");
   const [timeInGreenZone, setTimeInGreenZone] = useState(0);
   const [timeInRedZone, setTimeInRedZone] = useState(0);
   const [timeInBlueZone, setTimeInBlueZone] = useState(0);
@@ -15,32 +14,26 @@ const ChartDetail = (props) => {
 
   const mountedStyle = { animationName: "inAnimation" };
   const unmountedStyle = { animationName: "outAnimation" };
+
   useEffect(() => {
-    if (stream === "end") {
+    if (latestDataPoint === "end") {
       setIsMounted(true);
       setShowDiv(true);
-    } else if (stream.length > 1) {
-      console.log("hi");
-      const dataPoint = stream[stream.length - 1];
-
-      setPeakValue((prev) =>
-        dataPoint.levels > prev ? dataPoint.levels : prev
-      );
-      setMinValue((prev) =>
-        dataPoint.levels < prev ? dataPoint.levels : prev
-      );
-
-      if (dataPoint.levels >= 70) {
+    } else if (latestDataPoint) {
+      if (latestDataPoint.levels >= 70) {
+        setCurrentZone("Blue");
         setTimeInBlueZone((prev) => prev + 1);
-      } else if (dataPoint.levels < 70 && dataPoint.levels >= 40) {
+      } else if (latestDataPoint.levels < 70 && latestDataPoint.levels >= 30) {
+        setCurrentZone("Green");
         setTimeInGreenZone((prev) => prev + 1);
       } else {
+        setCurrentZone("Red");
         setTimeInRedZone((prev) => prev + 1);
       }
 
       setTotalPoints((prev) => prev + 1);
     }
-  }, [stream]);
+  }, [latestDataPoint]);
 
   const blueZonePercentage = ((timeInBlueZone / totalPoints) * 100).toFixed(2);
   const greenZonePercentage = ((timeInGreenZone / totalPoints) * 100).toFixed(
@@ -65,21 +58,49 @@ const ChartDetail = (props) => {
           <div className="percentage">{greenZonePercentage}%</div>
         </div>
       )}
-      <div className="current-chart-values">
+      <div className="current-chart-values progress">
         <div className="chart-values-header">Progress</div>
         <div className="chart-values-values">
-          <div className="chart-values-section radial-chart">
-            <ProgressChart />
-          </div>
+          <ProgressChart />
         </div>
       </div>
-      <div className="current-chart-values">
+      <div className="current-chart-values current-zone">
         <div className="chart-values-header">Current Zone</div>
+        <div className="chart-values-values">{currentZone}</div>
+      </div>
+      <div className="current-chart-values current-tsi">
+        <div className="chart-values-header">Current TSI</div>
         <div className="chart-values-values">
-          {/* {stream !== "end" ? stream[stream.length - 1] : 0} */}
+          {latestDataPoint && latestDataPoint !== "end"
+            ? latestDataPoint.levels
+            : 0}
         </div>
       </div>
-      <div className="current-chart-values">
+      <div className="current-chart-values predicted-tsi">
+        <div className="chart-values-header">Predicted TSI</div>
+        <div className="chart-values-values">
+          {latestDataPoint && latestDataPoint !== "end"
+            ? latestDataPoint.levels
+            : 0}
+        </div>
+      </div>
+      <div className="current-chart-values total-time">
+        <div className="chart-values-header">Total Time</div>
+        <div className="chart-values-values">{totalPoints}</div>
+      </div>
+      <div className="current-chart-values green-zone">
+        <div className="chart-values-header">Green Zone</div>
+        <div className="chart-values-values">{greenZonePercentage}%</div>
+      </div>
+      <div className="current-chart-values red-zone">
+        <div className="chart-values-header">Red Zone</div>
+        <div className="chart-values-values">{redZonePercentage}%</div>
+      </div>
+      <div className="current-chart-values  blue-zone">
+        <div className="chart-values-header">Blue Zone</div>
+        <div className="chart-values-values">{blueZonePercentage}%</div>
+      </div>
+      {/* <div className="current-chart-values">
         <div className="chart-values-header">TSI values</div>
         <div className="chart-values-values">
           <div className="chart-values-section current">
@@ -88,8 +109,8 @@ const ChartDetail = (props) => {
             </div>
             <div className="current-values-values">
               <p>
-                {stream !== "end" && stream.length > 1
-                  ? stream[stream.length - 1].levels
+                {latestDataPoint && latestDataPoint !== "end"
+                  ? latestDataPoint.levels
                   : 0}
               </p>
             </div>
@@ -100,19 +121,17 @@ const ChartDetail = (props) => {
             </div>
             <div className="current-values-values">
               <p>
-                {stream !== "end" && stream.length > 1
-                  ? stream[stream.length - 1].levels
+                {latestDataPoint && latestDataPoint !== "end"
+                  ? latestDataPoint.levels
                   : 0}
               </p>
             </div>
           </div>
-
-          {/* {stream !== "end" ? stream[stream.length - 1] : 0} */}
         </div>
       </div>
-      <div className="current-chart-values">
-        <div className="chart-values-header">Time</div>
+      <div className="current-chart-values time">
         <div className="chart-values-values time">
+          <div className="chart-values-header">Time</div>
           <div className="chart-values-section time total-time">
             <div className="section-values-header">
               <p> Total:</p>
@@ -121,12 +140,13 @@ const ChartDetail = (props) => {
               <p>{totalPoints}</p>
             </div>
           </div>
+          <div></div>
           <div className="chart-values-section time green-zone">
             <div className="section-values-header">
               <p>Green Zone:</p>
             </div>
             <div className="current-values-values">
-              <p>{greenZonePercentage}</p>
+              <p>{greenZonePercentage}%</p>
             </div>
           </div>
           <div className="chart-values-section time red-zone">
@@ -134,7 +154,7 @@ const ChartDetail = (props) => {
               <p>Red Zone :</p>
             </div>
             <div className="current-values-values">
-              <p>{redZonePercentage}</p>
+              <p>{redZonePercentage}%</p>
             </div>
           </div>
           <div className="chart-values-section time blue-zone">
@@ -142,11 +162,11 @@ const ChartDetail = (props) => {
               <p>Blue Zone :</p>
             </div>
             <div className="current-values-values">
-              <p>{blueZonePercentage}</p>
+              <p>{blueZonePercentage}%</p>
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };

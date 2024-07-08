@@ -3,8 +3,43 @@
   height: 100vh;
   width: 100vw;
 }
-.page-conatiner {
+.page-container {
+  display: grid;
+  grid-template-columns: 150px auto;
+  grid-template-rows: 7vh auto;
+  grid-template-areas:
+    "sidebar greeter"
+    "sidebar page";
+  height: 100%;
+  width: 100%;
+}
+
+.sidebar {
+  grid-area: sidebar;
+}
+
+.greeter {
+  grid-area: greeter;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* padding: 30px 30px; */
+}
+
+.greeter p {
+  margin: 0;
+  padding: 2px 0;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+}
+
+.welcome-line {
+  font-weight: bold;
+  font-size: 25px;
+}
+
+.page {
+  grid-area: page;
 }
 
 .title-name-section {

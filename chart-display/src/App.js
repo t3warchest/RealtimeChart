@@ -12,14 +12,20 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <div className="page-conatiner">
+        <div className="page-container">
           <SideBar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/records" element={<Records />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
+          <div className="greeter">
+            <p className="welcome-line">Hello, Michel Thomas</p>
+            <p>This is dashboard</p>
+          </div>
+          <div className="page">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/records" element={<Records />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/contact" element={<Contact />} />
+            </Routes>
+          </div>
         </div>
       </div>
     </Router>

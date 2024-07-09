@@ -147,7 +147,7 @@ const SessionContent = ({ activeTab }) => {
                 })),
               },
             ]);
-            setDataForAnalytics(data);
+            // setDataForAnalytics(data);
           }
           setCallFinish(true);
         })

@@ -2,11 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const amqp = require("amqplib");
 const redis = require("redis");
-const fs = require("fs");
-const csv = require("csv-parser");
 const path = require("path");
 const ws = require("ws");
-const { INTEGER } = require("sequelize");
 
 const wss = new ws.WebSocketServer({ port: 8080 });
 const app = express();
@@ -53,6 +50,22 @@ app.use((req, res, next) => {
   );
   res.setHeader("Access-Control-Allow-Methods", "POST,GET,PATCH,DELETE");
   next();
+});
+
+const _dirname = path.dirname("");
+const buildpath = path.join(_dirname, "../chart-display/build");
+
+app.use(express.static(buildpath));
+
+app.get("/", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../chart-display/build/index.html"),
+    function (err) {
+      if (err) {
+        res.status(500).send(err);
+      }
+    }
+  );
 });
 
 let sockets = [];

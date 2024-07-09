@@ -1,12 +1,14 @@
-const express = require("express");
 const bodyParser = require("body-parser");
 const amqp = require("amqplib");
 const redis = require("redis");
 const path = require("path");
+const express = require("express");
 const ws = require("ws");
+const http = require("http");
 
-const wss = new ws.WebSocketServer({ port: 8080 });
 const app = express();
+const server = http.createServer(app);
+const wss = new ws.Server({ server: server });
 const client = redis.createClient({
   password: "YiDuWXnAVoXV3YoXD7OiWkCbTVrAOZst",
   socket: {
@@ -274,6 +276,6 @@ app.get("/sessiondata", async (req, res, next) => {
 });
 
 const port = 8000;
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });

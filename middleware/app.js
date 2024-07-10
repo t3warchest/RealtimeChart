@@ -33,10 +33,23 @@ const client = redis.createClient({
   },
 });
 
+const redisSub = redis.createClient({
+  password: "YiDuWXnAVoXV3YoXD7OiWkCbTVrAOZst",
+  socket: {
+    host: "redis-11660.c212.ap-south-1-1.ec2.redns.redis-cloud.com",
+    port: 11660,
+  },
+});
+
 client
   .connect()
   .then(() => console.log("Connected to Redis!"))
   .catch((err) => console.error("Failed to connect to Redis:", err));
+
+redisSub
+  .connect()
+  .then(() => console.log("redis subscriber connected"))
+  .catch((err) => console.error("Failed to connect to Redis sub:", err));
 
 client.on("error", function (err) {
   console.error("Redis error:", err);
@@ -80,7 +93,7 @@ wss.on("connection", async (socket) => {
   const notifierState = await client.get("start-stop-notifier");
   console.log("current notifier state :", notifierState);
 
-  const { channel, qname } = await establishRmqChannel();
+  // const { channel, qname } = await establishRmqChannel();
 
   // clientStates.set(socket, { started: false });
 
@@ -121,68 +134,98 @@ wss.on("connection", async (socket) => {
     });
   });
 
-  sendThroughSocket(channel, qname);
+  // sendThroughSocket(channel, qname);
 });
 
-async function establishRmqChannel() {
-  let channel;
-  const qname = "levels_data";
-  try {
-    const connection = await amqp.connect("amqp://localhost");
-    channel = await connection.createChannel(); // Corrected to not pass `connection` as a parameter
-    channel.assertQueue(qname, { durable: false });
-    console.log("Channel created");
-  } catch (error) {
-    console.error("Error in establishRmqChannel:", error);
-  }
-  return { channel, qname };
-}
+// async function establishRmqChannel() {
+//   let channel;
+//   const qname = "levels_data";
+//   try {
+//     const connection = await amqp.connect("amqp://localhost");
+//     channel = await connection.createChannel(); // Corrected to not pass `connection` as a parameter
+//     channel.assertQueue(qname, { durable: false });
+//     console.log("Channel created");
+//   } catch (error) {
+//     console.error("Error in establishRmqChannel:", error);
+//   }
+//   return { channel, qname };
+// }
 
-async function sendThroughSocket(channel, qname) {
-  channel.consume(qname, async (message) => {
-    const current_time = new Date();
+// async function sendThroughSocket(channel, qname) {
+//   channel.consume(qname, async (message) => {
+//     const current_time = new Date();
+//     try {
+//       const data = message.content.toString();
+
+//       if (data === "end") {
+//         console.log("end");
+//         try {
+//           await client.set("start-stop-notifier", "stop");
+//         } catch (err) {
+//           console.log("err in setting key", err);
+//         } finally {
+//           console.log("notifier key set to stop");
+//         }
+//         sockets.forEach((socket) => {
+//           if (socket.readyState === ws.OPEN) {
+//             socket.send("end");
+//           }
+//         });
+//       } else {
+//         const value = JSON.parse(data);
+//         // const new_time = new Date(current_time.getTime() + value.time * 1000);
+//         // value.time = new_time.getTime();
+
+//         // console.log(time);
+
+//         try {
+//           sockets.forEach((socket) => {
+//             if (socket.readyState === ws.OPEN) {
+//               console.log(value);
+//               socket.send(JSON.stringify(value));
+//             }
+//           });
+//         } catch (err) {
+//           console.log("err in sockert", err);
+//         }
+//       }
+//       channel.ack(message);
+//     } catch (err) {
+//       console.log("err in consuming ", err);
+//       throw err;
+//     }
+//   });
+// }
+
+redisSub.subscribe("levels_data", (message) => {
+  const data = message;
+  console.log("Received message:", data);
+
+  if (data === "end") {
+    console.log("end");
     try {
-      const data = message.content.toString();
-
-      if (data === "end") {
-        console.log("end");
-        try {
-          await client.set("start-stop-notifier", "stop");
-        } catch (err) {
-          console.log("err in setting key", err);
-        } finally {
-          console.log("notifier key set to stop");
-        }
-        sockets.forEach((socket) => {
-          if (socket.readyState === ws.OPEN) {
-            socket.send("end");
-          }
-        });
-      } else {
-        const value = JSON.parse(data);
-        // const new_time = new Date(current_time.getTime() + value.time * 1000);
-        // value.time = new_time.getTime();
-
-        // console.log(time);
-
-        try {
-          sockets.forEach((socket) => {
-            if (socket.readyState === ws.OPEN) {
-              console.log(value);
-              socket.send(JSON.stringify(value));
-            }
-          });
-        } catch (err) {
-          console.log("err in sockert", err);
-        }
-      }
-      channel.ack(message);
+      client.set("start-stop-notifier", "stop");
     } catch (err) {
-      console.log("err in consuming ", err);
-      throw err;
+      console.log("err in setting key", err);
+    } finally {
+      console.log("notifier key set to stop");
     }
-  });
-}
+    sockets.forEach((socket) => {
+      if (socket.readyState === ws.OPEN) {
+        socket.send("end");
+      }
+    });
+  } else {
+    const value = JSON.parse(data);
+
+    sockets.forEach((socket) => {
+      if (socket.readyState === ws.OPEN) {
+        console.log(value);
+        socket.send(JSON.stringify(value));
+      }
+    });
+  }
+});
 
 async function evaporateData(channel, qname) {
   channel.consume(qname, async (message) => {

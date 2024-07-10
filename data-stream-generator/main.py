@@ -20,26 +20,29 @@ def read_csv(file_path):
     df = pd.read_csv(file_path)
     return list(df.iloc[:, 0].to_dict().values()), list(df.iloc[:, 1].to_dict().values())
 
-def send_to_mq(queue_name, message):
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue=queue_name, durable=False)
-    channel.basic_publish(exchange='', routing_key=queue_name, body=message)
-    connection.close()
+# def send_to_mq(queue_name, message):
+#     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+#     channel = connection.channel()
+#     channel.queue_declare(queue=queue_name, durable=False)
+#     channel.basic_publish(exchange='', routing_key=queue_name, body=message)
+#     connection.close()
+def send_to_redis(channel, message):
+    redis_client.publish(channel, message)
 
 def start_publishing():
     csv_file_path = 'data_2.csv'
-    queue_name = 'levels_data'
+    channel = 'levels_data'
     elapsed_times, data_values = read_csv(csv_file_path)
     times = elapsed_times#[:50]
     values = data_values#[:50]
     
     current_time = datetime.datetime.now()
-    intitalValues = json.dumps({
+    initialValues = json.dumps({
         'time':current_time.isoformat(),
         'levels':0
     })
-    send_to_mq(queue_name,intitalValues)
+    # send_to_mq(queue_name,intitalValues)
+    send_to_redis(channel, initialValues)
     
     current_time_timestamp = int(current_time.timestamp() * 1000)
     
@@ -62,7 +65,8 @@ def start_publishing():
         
         timestamp_ms = int(timeValue.timestamp() * 1000)
 
-        send_to_mq(queue_name, message)
+        # send_to_mq(queue_name, message)
+        send_to_redis(channel,message)
         
         redis_time_series_client.add(sessionKey,timestamp_ms,value)
         
@@ -70,7 +74,8 @@ def start_publishing():
 
         time.sleep(0.1)
         
-    send_to_mq(queue_name, "end")
+    # send_to_mq(queue_name, "end")
+    send_to_redis(channel, "end")
     
     sessionSetsKey = f"patients:{patientId}:sessions"
     redis_client.zadd(sessionSetsKey,{sessionId:current_time_timestamp})

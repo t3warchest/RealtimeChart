@@ -78,8 +78,12 @@
   flex-direction: column;
   text-align: left;
 }
-.current-chart-values.progress {
-  grid-row: span 1;
+.current-chart-values.progress .chart-values-values {
+  display: flex;
+  flex-direction: column;
+}
+.current-chart-values.progress .chart-values-values p {
+  font-size: small;
 }
 
 .chart-values-header {

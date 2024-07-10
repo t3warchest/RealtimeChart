@@ -1,29 +1,57 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 
-const ProgressChart = () => {
-  const series = [70];
+const ProgressChart = ({ timeingreen }) => {
+  const time = 1000;
+  const target = 3000;
+  const [percentageAchieved, setPercentageAchieved] = useState(0);
+
+  useEffect(() => {
+    const percentage = (time / target) * 100;
+    setPercentageAchieved(percentage > 100 ? 100 : percentage);
+  }, [timeingreen]);
+
   const options = {
     chart: {
-      height: 250,
+      height: 100,
       type: "radialBar",
     },
     plotOptions: {
       radialBar: {
         hollow: {
-          size: "70%",
+          size: "50%",
+        },
+        dataLabels: {
+          show: true,
+          name: {
+            // offsetY: -10,
+            show: false,
+          },
+          value: {
+            offsetY: 0,
+            offsetX: 10,
+            color: "#111",
+            fontSize: "15px",
+            show: true,
+            // formatter: function (val) {
+            //   return parseInt(val) + "%";
+            // },
+          },
         },
       },
     },
-    labels: ["Cricket"],
+    labels: ["target:3000"],
   };
+
+  const series = [percentageAchieved];
+
   return (
     <div>
       <Chart
         type="radialBar"
         options={options}
         series={series}
-        height="100%"
+        height="500px"
         width="100%"
       />
     </div>

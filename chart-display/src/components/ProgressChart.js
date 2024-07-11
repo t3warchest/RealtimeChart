@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 
-const ProgressChart = ({ timeingreen }) => {
+const ProgressChart = ({ timeInGreenZone }) => {
   const target = 3000;
   const [percentageAchieved, setPercentageAchieved] = useState(0);
 
   useEffect(() => {
-    const percentage = (timeingreen / target) * 100;
+    const percentage = (timeInGreenZone / target) * 100;
     setPercentageAchieved(percentage > 100 ? 100 : percentage.toFixed(2));
-  }, [timeingreen]);
+  }, [timeInGreenZone]);
 
   const options = {
     chart: {

@@ -62,7 +62,7 @@ const ChartDetail = (props) => {
         <div className="chart-values-header">Progress</div>
         <div className="chart-values-values">
           <p>Target:3000</p>
-          <ProgressChart timeInGreenZone={timeInBlueZone} />
+          <ProgressChart timeInGreenZone={timeInGreenZone} />
         </div>
       </div>
       <div className="current-chart-values current-zone">

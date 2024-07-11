@@ -5,6 +5,7 @@ const path = require("path");
 const express = require("express");
 const ws = require("ws");
 const http = require("http");
+const { time } = require("console");
 
 const app = express();
 const server = http.createServer(app);
@@ -306,15 +307,21 @@ app.get("/sessiondata", async (req, res, next) => {
     const reqstdSessionId = sessionsList[sessionsList.length - sessionNumber];
     console.log(reqstdSessionId);
     const sessionKey = `patients:${patientId}:${reqstdSessionId}`;
-    let sessionData;
+    let sessionData, levels, timestamps;
     try {
       sessionData = await client.ts.range(sessionKey, "-", "+");
+      levels = sessionData.map((point) => point.value);
+      timestamps = sessionData.map((point) => point.timestamp);
     } catch (err) {
       console.log(err);
       res.status(404).json([]);
     }
-    console.log("sessionData");
-    res.status(201).json(sessionData);
+    const responseObj = {
+      levels: levels,
+      timestamps: timestamps,
+    };
+    console.log(responseObj);
+    res.status(201).json(responseObj);
   }
 });
 

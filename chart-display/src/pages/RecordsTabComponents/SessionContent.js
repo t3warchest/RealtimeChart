@@ -57,8 +57,9 @@ const SessionContent = ({ activeTab }) => {
       max: 100,
     },
     xaxis: {
-      type: "numeric",
+      type: "datetime",
       tickAmount: 7,
+      // categories: [],
       labels: {
         formatter: function (val) {
           const date = new Date(val);
@@ -128,6 +129,7 @@ const SessionContent = ({ activeTab }) => {
         });
     } else {
       setNoData(false);
+      let tempData;
       fetch(`http://16.170.202.169:8000/sessiondata?session=${activeTab}`)
         .then((response) => {
           console.log(response);
@@ -139,16 +141,21 @@ const SessionContent = ({ activeTab }) => {
             setNoData(true);
             console.log(noData);
           } else {
+            tempData = data.levels;
             ApexCharts.exec("realtime", "updateSeries", [
               {
-                data: data.map((point) => ({
-                  x: point.timestamp,
-                  y: point.value,
-                })),
+                data: data.levels,
               },
             ]);
-            // setDataForAnalytics(data);
+            ApexCharts.exec("realtime", "updateOptions", {
+              xaxis: {
+                categories: data.timestamps,
+                tickPlacement: "on",
+              },
+              // labels: data.timestamps,
+            });
           }
+          // setDataForAnalytics(tempData);
           setCallFinish(true);
         })
         .catch((err) => {

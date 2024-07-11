@@ -15,12 +15,9 @@ const SessionDetails = ({ dataForAnalytics }) => {
     if (dataForAnalytics) {
       dataForAnalytics.forEach((latestDataPoint) => {
         if (latestDataPoint) {
-          if (latestDataPoint.levels >= 70) {
+          if (latestDataPoint >= 70) {
             blueZoneTime += 1;
-          } else if (
-            latestDataPoint.levels < 70 &&
-            latestDataPoint.levels >= 30
-          ) {
+          } else if (latestDataPoint < 70 && latestDataPoint >= 30) {
             greenZoneTime += 1;
           } else {
             redZoneTime += 1;

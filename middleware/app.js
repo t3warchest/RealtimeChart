@@ -134,69 +134,7 @@ wss.on("connection", async (socket) => {
       return s !== socket;
     });
   });
-
-  // sendThroughSocket(channel, qname);
 });
-
-// async function establishRmqChannel() {
-//   let channel;
-//   const qname = "levels_data";
-//   try {
-//     const connection = await amqp.connect("amqp://localhost");
-//     channel = await connection.createChannel(); // Corrected to not pass `connection` as a parameter
-//     channel.assertQueue(qname, { durable: false });
-//     console.log("Channel created");
-//   } catch (error) {
-//     console.error("Error in establishRmqChannel:", error);
-//   }
-//   return { channel, qname };
-// }
-
-// async function sendThroughSocket(channel, qname) {
-//   channel.consume(qname, async (message) => {
-//     const current_time = new Date();
-//     try {
-//       const data = message.content.toString();
-
-//       if (data === "end") {
-//         console.log("end");
-//         try {
-//           await client.set("start-stop-notifier", "stop");
-//         } catch (err) {
-//           console.log("err in setting key", err);
-//         } finally {
-//           console.log("notifier key set to stop");
-//         }
-//         sockets.forEach((socket) => {
-//           if (socket.readyState === ws.OPEN) {
-//             socket.send("end");
-//           }
-//         });
-//       } else {
-//         const value = JSON.parse(data);
-//         // const new_time = new Date(current_time.getTime() + value.time * 1000);
-//         // value.time = new_time.getTime();
-
-//         // console.log(time);
-
-//         try {
-//           sockets.forEach((socket) => {
-//             if (socket.readyState === ws.OPEN) {
-//               console.log(value);
-//               socket.send(JSON.stringify(value));
-//             }
-//           });
-//         } catch (err) {
-//           console.log("err in sockert", err);
-//         }
-//       }
-//       channel.ack(message);
-//     } catch (err) {
-//       console.log("err in consuming ", err);
-//       throw err;
-//     }
-//   });
-// }
 
 redisSub.subscribe("levels_data", (message) => {
   const data = message;

@@ -2,8 +2,13 @@ import React from "react";
 
 export const SideBarPages = [
   {
+    title: "Log In",
+    icon: <i class="fa-solid fa-right-to-bracket"></i>,
+    link: "/login",
+  },
+  {
     title: "Records",
-    icon: <i class="fa-regular fa-clipboard"></i>,
+    icon: <i class="fa-solid fa-clipboard"></i>,
     link: "/records",
   },
   {
@@ -20,15 +25,5 @@ export const SideBarPages = [
     title: "Home",
     icon: <i class="fa-solid fa-house"></i>,
     link: "/home",
-  },
-  {
-    title: "Records",
-    icon: <i class="fa-regular fa-clipboard"></i>,
-    link: "/taj",
-  },
-  {
-    title: "Records",
-    icon: <i class="fa-regular fa-clipboard"></i>,
-    link: "/taj",
   },
 ];

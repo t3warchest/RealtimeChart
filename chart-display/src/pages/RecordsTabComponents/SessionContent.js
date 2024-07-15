@@ -5,6 +5,10 @@ import SessionDetails from "./SessionDetails";
 
 const SessionContent = ({ activeTab }) => {
   const [dataForAnalytics, setDataForAnalytics] = useState([]);
+  const [fetchedData, setFetchedData] = useState({
+    newSeries: [],
+    newOptions: {},
+  });
   const [callFinish, setCallFinish] = useState(false);
   const [noData, setNoData] = useState(false);
   const series = [
@@ -20,6 +24,10 @@ const SessionContent = ({ activeTab }) => {
       type: "line",
       animations: {
         enabled: false,
+        easing: "linear",
+        dynamicAnimation: {
+          speed: 200,
+        },
       },
     },
     fill: {
@@ -88,7 +96,7 @@ const SessionContent = ({ activeTab }) => {
     setNoData(false);
     console.log(activeTab);
     if (activeTab === 4) {
-      fetch(`http://16.170.202.169:8000/sessiondata?session=all`)
+      fetch(`http://localhost:8000/sessiondata?session=all`)
         .then((response) => {
           console.log(response);
           return response.json();
@@ -102,25 +110,29 @@ const SessionContent = ({ activeTab }) => {
             const xaxisPoints = data.xaxisPoints;
             const levelsArray = data.levelsArray;
 
-            const newSeries = [
-              {
-                name: "Session 1",
-                data: levelsArray["0"],
+            setFetchedData({
+              newSeries: [
+                {
+                  name: "Session 1",
+                  data: levelsArray["0"],
+                },
+                {
+                  name: "Session 2",
+                  data: levelsArray["1"],
+                },
+                {
+                  name: "Session 3",
+                  data: levelsArray["2"],
+                },
+              ],
+              newOptions: {
+                xaxis: {
+                  categories: xaxisPoints,
+                  type: "numeric",
+                },
               },
-              {
-                name: "Session 2",
-                data: levelsArray["1"],
-              },
-              {
-                name: "Session 3",
-                data: levelsArray["2"],
-              },
-            ];
-            console.log("after new series set");
-            ApexCharts.exec("realtime", "updateOptions", {
-              xaxis: { categories: xaxisPoints },
             });
-            ApexCharts.exec("realtime", "updateSeries", newSeries);
+            setDataForAnalytics([]);
           }
           setCallFinish(true);
         })
@@ -129,8 +141,7 @@ const SessionContent = ({ activeTab }) => {
         });
     } else {
       setNoData(false);
-      let tempData;
-      fetch(`http://16.170.202.169:8000/sessiondata?session=${activeTab}`)
+      fetch(`http://localhost:8000/sessiondata?session=${activeTab}`) //localhost // 16.170.202.169
         .then((response) => {
           console.log(response);
           return response.json();
@@ -139,23 +150,23 @@ const SessionContent = ({ activeTab }) => {
           console.log(data);
           if (data.length === 0) {
             setNoData(true);
-            console.log(noData);
+            // console.log(noData);
           } else {
-            tempData = data.levels;
-            ApexCharts.exec("realtime", "updateSeries", [
-              {
-                data: data.levels,
+            setFetchedData({
+              newSeries: [
+                {
+                  data: data.levels,
+                },
+              ],
+              newOptions: {
+                xaxis: {
+                  categories: data.timestamps,
+                  type: "datetime",
+                },
               },
-            ]);
-            ApexCharts.exec("realtime", "updateOptions", {
-              xaxis: {
-                categories: data.timestamps,
-                tickPlacement: "on",
-              },
-              // labels: data.timestamps,
             });
           }
-          // setDataForAnalytics(tempData);
+          setDataForAnalytics(data.levels);
           setCallFinish(true);
         })
         .catch((err) => {
@@ -163,6 +174,11 @@ const SessionContent = ({ activeTab }) => {
         });
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    ApexCharts.exec("realtime", "updateSeries", fetchedData.newSeries);
+    ApexCharts.exec("realtime", "updateOptions", fetchedData.newOptions);
+  }, [fetchedData]);
 
   return (
     <div className="session-content-container">

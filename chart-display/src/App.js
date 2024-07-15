@@ -1,34 +1,50 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthContext } from "./context/auth-context";
+import { useState, useCallback } from "react";
+
 import "./App.css";
-import Navbar from "./components/Navbar";
 import SideBar from "./components/SideBar";
 import Records from "./pages/Records";
 import Contact from "./pages/Contact";
 import Account from "./pages/Account";
 import Home from "./pages/Home";
-
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const login = useCallback(() => {
+    setIsLoggedIn(true);
+  }, []);
+  const logout = useCallback(() => {
+    setIsLoggedIn(false);
+  }, []);
+
   return (
-    <Router>
-      <div className="app">
-        <div className="page-container">
-          <SideBar />
-          <div className="greeter">
-            <p className="welcome-line">Hello, Michel Thomas</p>
-            <p>This is dashboard</p>
-          </div>
-          <div className="page">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/records" element={<Records />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
+    <AuthContext.Provider
+      value={{ isLoggedIn: isLoggedIn, login: login, logout: logout }}
+    >
+      <Router>
+        <div className="app">
+          <div className="page-container">
+            <SideBar />
+            <div className="greeter">
+              <p className="welcome-line">Hello, Michel Thomas</p>
+              <p>This is dashboard</p>
+            </div>
+            <div className="page">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/records" element={<Records />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/login" element={<Login />} />
+              </Routes>
+            </div>
           </div>
         </div>
-      </div>
-    </Router>
+      </Router>
+    </AuthContext.Provider>
   );
 }
 

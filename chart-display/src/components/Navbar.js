@@ -11,7 +11,7 @@ const Navbar = () => {
           style={{ textDecoration: "none" }}
           className="title-text"
         >
-          Mihos<span>.</span>
+          Walk-On<span>.</span>
         </NavLink>
       </nav>
     </nav>

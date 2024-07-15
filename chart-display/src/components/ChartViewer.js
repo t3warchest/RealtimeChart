@@ -1,10 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import Chart from "react-apexcharts";
 import ApexCharts from "apexcharts";
+import saveAs from "file-saver";
 
 function ChartViewer({ latestDataPoint }) {
   const dataRef = useRef([]);
   const chartRef = useRef(null);
+  let marker5min = 0;
+  let currentTime = new Date().getMinutes();
+
+  const series = [
+    {
+      name: "levels",
+      data: [],
+    },
+  ];
 
   const options = {
     chart: {
@@ -123,24 +133,32 @@ function ChartViewer({ latestDataPoint }) {
   useEffect(() => {
     if (latestDataPoint && latestDataPoint !== "end") {
       dataRef.current.push(latestDataPoint);
-      ApexCharts.exec("realtime", "updateSeries", [
-        {
-          name: "Levels",
-          data: dataRef.current.map((point) => ({
-            x: point.time,
-            y: point.levels,
-          })),
-        },
-      ]);
     } else if (latestDataPoint === "end") {
       console.log("inside else");
       ApexCharts.exec("realtime", "updateOptions", {
+        chart: {
+          animations: {
+            enabled: true,
+          },
+        },
         xaxis: {
           range: undefined,
         },
       });
+      // downloadCSV(dataRef.current);
     }
   }, [latestDataPoint]);
+
+  const downloadCSV = (data) => {
+    const headers = ["time", "levels"];
+    const csvData = [
+      headers.join(","),
+      ...data.map((row) => `${row[0]},${row[1]}`),
+    ].join("\n");
+
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "dataStream.csv");
+  };
 
   return (
     <div className="chartviewer-container-component">
@@ -149,10 +167,7 @@ function ChartViewer({ latestDataPoint }) {
         series={[
           {
             name: "Levels",
-            data: dataRef.current.map((point) => ({
-              x: point.time,
-              y: point.levels,
-            })),
+            data: dataRef.current,
           },
         ]}
         type="line"

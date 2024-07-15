@@ -20,10 +20,10 @@ const ChartDetail = (props) => {
       setIsMounted(true);
       setShowDiv(true);
     } else if (latestDataPoint) {
-      if (latestDataPoint.levels >= 70) {
+      if (latestDataPoint[1] >= 70) {
         setCurrentZone("Blue");
         setTimeInBlueZone((prev) => prev + 1);
-      } else if (latestDataPoint.levels < 70 && latestDataPoint.levels >= 30) {
+      } else if (latestDataPoint[1] < 70 && latestDataPoint[1] >= 30) {
         setCurrentZone("Green");
         setTimeInGreenZone((prev) => prev + 1);
       } else {
@@ -73,7 +73,7 @@ const ChartDetail = (props) => {
         <div className="chart-values-header">Current TSI</div>
         <div className="chart-values-values">
           {latestDataPoint && latestDataPoint !== "end"
-            ? latestDataPoint.levels
+            ? latestDataPoint[1]
             : 0}
         </div>
       </div>
@@ -81,7 +81,7 @@ const ChartDetail = (props) => {
         <div className="chart-values-header">Predicted TSI</div>
         <div className="chart-values-values">
           {latestDataPoint && latestDataPoint !== "end"
-            ? latestDataPoint.levels
+            ? latestDataPoint[1]
             : 0}
         </div>
       </div>

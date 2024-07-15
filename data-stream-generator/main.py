@@ -214,17 +214,14 @@ def send_to_redis(channel, message):
     redis_client.publish(channel, message)
 
 def start_publishing():
-    csv_file_path = 'data_3.csv'
+    csv_file_path = 'data_1.csv'
     channel = 'levels_data'
     elapsed_times, data_values = read_csv(csv_file_path)
     times = elapsed_times#[:50]
     values = data_values#[:50]
     
     current_time = datetime.datetime.now()
-    initialValues = json.dumps({
-        'time':current_time.isoformat(),
-        'levels':0
-    })
+    initialValues = json.dumps([current_time.isoformat(),0])
     # send_to_mq(queue_name,intitalValues)
     send_to_redis(channel, initialValues)
     
@@ -242,10 +239,7 @@ def start_publishing():
         
         timeValue = (current_time + datetime.timedelta(seconds=elapsed_time))
         timeStoringFormat = timeValue.isoformat()
-        message = json.dumps({
-            'time': timeStoringFormat,
-            'levels': value
-        })
+        message = json.dumps([timeStoringFormat,value])
         
         timestamp_ms = int(timeValue.timestamp() * 1000)
 

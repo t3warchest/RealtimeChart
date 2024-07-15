@@ -21,6 +21,24 @@
 .start-end-button:hover {
   background-color: #e6d9c0;
 }
+.disabled {
+  border-style: solid;
+  padding: 10px 20px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.refresh-button {
+  padding: 10px;
+  background-color: #2b8ef9;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+}
+
+.refresh-button:hover {
+  background-color: #0056b3;
+}
 
 .graph-display {
   width: 80%;
@@ -32,6 +50,7 @@
 .chart {
   /* margin-left: 10%; */
   /* height: 420px; */
+  position: relative;
   background-color: #faf6ef;
   display: grid;
   grid-template-columns: repeat(6, 15%);

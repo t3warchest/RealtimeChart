@@ -96,7 +96,7 @@ const SessionContent = ({ activeTab }) => {
     setNoData(false);
     console.log(activeTab);
     if (activeTab === 4) {
-      fetch(`http://localhost:8000/sessiondata?session=all`)
+      fetch(`http://16.170.202.169:8000/api/data/sessiondata?session=all`)
         .then((response) => {
           console.log(response);
           return response.json();
@@ -141,7 +141,9 @@ const SessionContent = ({ activeTab }) => {
         });
     } else {
       setNoData(false);
-      fetch(`http://localhost:8000/sessiondata?session=${activeTab}`) //localhost // 16.170.202.169
+      fetch(
+        `http://16.170.202.169:8000/api/data/sessiondata?session=${activeTab}`
+      ) //localhost // 16.170.202.169
         .then((response) => {
           console.log(response);
           return response.json();

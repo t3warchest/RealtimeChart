@@ -1,60 +1,14 @@
 const bodyParser = require("body-parser");
-const amqp = require("amqplib");
-const redis = require("redis");
 const path = require("path");
 const express = require("express");
-const ws = require("ws");
 const http = require("http");
-const { time } = require("console");
 
 const app = express();
 const server = http.createServer(app);
-const wss = new ws.Server({ server: server });
-const client = redis.createClient({
-  password: "YiDuWXnAVoXV3YoXD7OiWkCbTVrAOZst",
-  socket: {
-    host: "redis-11660.c212.ap-south-1-1.ec2.redns.redis-cloud.com",
-    port: 11660,
-  },
-  retry_strategy: function (options) {
-    if (options.error && options.error.code === "ECONNREFUSED") {
-      // End reconnecting on a specific error
-      return new Error("The server refused the connection");
-    }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      // End reconnecting after a specific timeout
-      return new Error("Retry time exhausted");
-    }
-    if (options.attempt > 10) {
-      // End reconnecting with built-in error
-      return undefined;
-    }
-    // reconnect after
-    return Math.min(options.attempt * 100, 3000);
-  },
-});
 
-const redisSub = redis.createClient({
-  password: "YiDuWXnAVoXV3YoXD7OiWkCbTVrAOZst",
-  socket: {
-    host: "redis-11660.c212.ap-south-1-1.ec2.redns.redis-cloud.com",
-    port: 11660,
-  },
-});
-
-client
-  .connect()
-  .then(() => console.log("Connected to Redis!"))
-  .catch((err) => console.error("Failed to connect to Redis:", err));
-
-redisSub
-  .connect()
-  .then(() => console.log("redis subscriber connected"))
-  .catch((err) => console.error("Failed to connect to Redis sub:", err));
-
-client.on("error", function (err) {
-  console.error("Redis error:", err);
-});
+const userRoutes = require("./routes/user-routes");
+const dataRoutes = require("./routes/data-routes");
+const setUpWebSocket = require("./connections/websocket-connection");
 
 app.use(bodyParser.json());
 
@@ -84,184 +38,11 @@ app.get("/", (req, res) => {
   );
 });
 
-let sockets = [];
-// let clientStates = new Map();
+setUpWebSocket(server);
 
-wss.on("connection", async (socket) => {
-  console.log("new connection");
-  sockets.push(socket);
-  await client.set("start-stop-notifier", "stop");
-  const notifierState = await client.get("start-stop-notifier");
-  console.log("current notifier state :", notifierState);
+app.use("/api/users", userRoutes);
 
-  // const { channel, qname } = await establishRmqChannel();
-
-  // clientStates.set(socket, { started: false });
-
-  socket.on("message", async (message) => {
-    const data = message.toString();
-    console.log(data);
-    if (data === "start channel") {
-      // clientStates.get(socket).started = true;
-      try {
-        await client.set("start-stop-notifier", "start");
-      } catch (err) {
-        console.log("err in setting key", err);
-      } finally {
-        console.log("notifier key set to start");
-      }
-    } else if (data === "end channel") {
-      // clientStates.get(socket).started = false;
-      try {
-        await client.set("start-stop-notifier", "stop");
-      } catch (err) {
-        console.log("err in setting key", err);
-      } finally {
-        console.log("notifier key set to stop");
-      }
-      sockets.forEach((socket) => {
-        if (socket.readyState === ws.OPEN) {
-          socket.send("end");
-        }
-      });
-    }
-  });
-
-  socket.on("close", () => {
-    console.log("client disconnected");
-    // client.quit();
-    sockets.filter((s) => {
-      return s !== socket;
-    });
-  });
-});
-
-redisSub.subscribe("levels_data", (message) => {
-  const data = message;
-  console.log("Received message:", data);
-
-  if (data === "end") {
-    console.log("end");
-    try {
-      client.set("start-stop-notifier", "stop");
-    } catch (err) {
-      console.log("err in setting key", err);
-    } finally {
-      console.log("notifier key set to stop");
-    }
-    sockets.forEach((socket) => {
-      if (socket.readyState === ws.OPEN) {
-        socket.send("end");
-      }
-    });
-  } else {
-    const value = JSON.parse(data);
-
-    sockets.forEach((socket) => {
-      if (socket.readyState === ws.OPEN) {
-        console.log(value);
-        socket.send(JSON.stringify(value));
-      }
-    });
-  }
-});
-
-async function evaporateData(channel, qname) {
-  channel.consume(qname, async (message) => {
-    console.log(message.content.toString());
-  });
-}
-
-app.post("/", async (req, res, next) => {
-  res.json({ message: "successful" });
-});
-
-app.get("/sessiondata", async (req, res, next) => {
-  console.log("inside server");
-  const reqstdSession = req.query.session;
-  const patientId = "p001"; //req.query.patientId
-  const sessionSetsKey = `patients:${patientId}:sessions`;
-  const sessionsList = await client.zRange(sessionSetsKey, 0, -1);
-  console.log(reqstdSession);
-
-  function findXaxis(dataobj) {
-    let maxlength = 0;
-
-    for (const key in dataobj) {
-      if (dataobj.hasOwnProperty(key)) {
-        const currentLength = dataobj[key].length;
-        if (currentLength > maxlength) {
-          maxlength = currentLength;
-        }
-      }
-    }
-    const maxTimeArray = Array(maxlength)
-      .fill()
-      .map((_, index) => index + 1);
-
-    return { maxTimeArray, maxlength };
-  }
-  function createLevelsArray(data) {
-    const { maxTimeArray, maxlength } = findXaxis(data);
-    const levelsArray = {};
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        const levels = data[key].map((item) => item.value);
-        while (levels.length !== maxlength) {
-          levels.push(null);
-        }
-        levelsArray[key] = levels;
-      }
-    }
-    return levelsArray;
-  }
-
-  if (reqstdSession === "all") {
-    const allData = {};
-    console.log("sessionlist length", sessionsList.length);
-    // if (sessionsList.length !== 3) {
-    //   res.status(300).json(allData);
-    //   return;
-    // }
-    for (let sessionIndex in sessionsList) {
-      const sessionKey = `patients:${patientId}:${sessionsList[sessionIndex]}`;
-      console.log(sessionKey);
-      const sessionData = await client.ts.range(sessionKey, "-", "+");
-
-      allData[sessionIndex] = sessionData;
-    }
-    console.log("allData");
-    const { maxTimeArray, maxlength } = findXaxis(allData);
-    console.log("maxTimeArray");
-    const levelsArray = createLevelsArray(allData);
-    const responsePackage = {
-      xaxisPoints: maxTimeArray,
-      levelsArray: levelsArray,
-    };
-    res.status(201).json(responsePackage);
-  } else {
-    const sessionNumber = parseInt(reqstdSession, 10);
-    console.log(sessionNumber);
-    const reqstdSessionId = sessionsList[sessionsList.length - sessionNumber];
-    console.log(reqstdSessionId);
-    const sessionKey = `patients:${patientId}:${reqstdSessionId}`;
-    let sessionData, levels, timestamps;
-    try {
-      sessionData = await client.ts.range(sessionKey, "-", "+");
-      levels = sessionData.map((point) => point.value);
-      timestamps = sessionData.map((point) => point.timestamp);
-    } catch (err) {
-      console.log(err);
-      res.status(404).json([]);
-    }
-    const responseObj = {
-      levels: levels,
-      timestamps: timestamps,
-    };
-    console.log(responseObj);
-    res.status(201).json(responseObj);
-  }
-});
+app.use("/api/data", dataRoutes);
 
 const port = 8000;
 server.listen(port, () => {

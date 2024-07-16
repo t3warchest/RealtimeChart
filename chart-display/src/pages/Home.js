@@ -4,7 +4,7 @@ import ChartViewer from "../components/ChartViewer";
 import ChartDetail from "../components/ChartDetails";
 
 // const socket = new WebSocket("ws://16.170.202.169:8000/ws");
-const socket = new WebSocket("ws://localhost:8000/ws");
+const socket = new WebSocket("ws://16.170.202.169:8000/ws");
 
 const Home = () => {
   const [latestDataPoint, setLatestDataPoint] = useState(null);
